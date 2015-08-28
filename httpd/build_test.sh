@@ -6,7 +6,17 @@ cat > http2.html << EOF
 <head>
     <title>HTTP/2 DEMO</title>
 </head>
+<script>
+        function imageLoadTime() {
+                var lapsed = Date.now() - pageStart;
+                document.getElementById("loadTime").innerHTML = ((lapsed) / 1000).toFixed(2)
+        }
+        var pageStart = Date.now();
+</script>
 <body>
+<div id="main" >
+<div>Load time: <span id="loadTime">0</span>s.</div>
+</div>
 EOF
 
 i=0
@@ -17,7 +27,7 @@ do
   while [ $j -lt 45 ]
   do 
     cp -p tomcat.png images/$i$j.png
-    echo "<img height=\"20\" width=\"20\" src=\"images/$i$j.png\" />" >> http2.html
+    echo "<img height=\"20\" width=\"20\" onload='imageLoadTime()' src=\"images/$i$j.png\" />" >> http2.html
     j=`expr $j + 1`
   done
   echo "</div>" >> http2.html
