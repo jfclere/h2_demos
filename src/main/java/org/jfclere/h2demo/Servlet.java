@@ -20,6 +20,9 @@ import java.io.InputStream;
 @WebServlet(description = "Demo for H2", urlPatterns = { "/*" })
 public class Servlet extends HttpServlet {
 
+    static int LINE = 10;
+    static int COL  = 10;
+
     protected void service(HttpServletRequest req, HttpServletResponse resp)
            throws ServletException, IOException {
         System.out.println("ContextPath requested: " + req.getContextPath());
@@ -34,7 +37,7 @@ public class Servlet extends HttpServlet {
         if (url.endsWith("/page")) {
           resp.setContentType("text/html");
           PrintWriter out = resp.getWriter();
-          try { build_html(out, req.getContextPath(), "normal page"); } catch (IOException ex) { System.out.println("Ex: " + ex); }
+          try { build_html(out, req.getContextPath(), false); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
         if (url.endsWith("/push")) {
@@ -49,7 +52,7 @@ public class Servlet extends HttpServlet {
         System.out.println("RequestURL requested: " + url);
         
     }
-    void build_html(PrintWriter out, String context, String where) throws IOException  {
+    void build_html(PrintWriter out, String context, boolean push) throws IOException  {
           out.println("<!DOCTYPE html>");
           out.println("<html>");
           out.println("<head>");
@@ -63,23 +66,26 @@ public class Servlet extends HttpServlet {
           out.println("        var pageStart = Date.now();");
           out.println("</script>");
           out.println("<body>");
-          out.println(where);
+          if (push)
+            out.println("Server PUSHED");
+          else
+            out.println("Normal");
           out.println("<div id=\"main\" >");
           out.println("<div>Load time: <span id=\"loadTime\">0</span>s.</div>");
           out.println("</div>");
-          for (int i=0; i<25; i++) {
+          for (int i=0; i<LINE; i++) {
             out.println("<div id=\"row" + i + "\" >");
-            for (int j=0; j<45; j++) {
+            for (int j=0; j<COL; j++) {
               out.println("<img height=\"20\" width=\"20\" onload='imageLoadTime()' src=\"" + context + "/images/" + i + j + ".png\" />");
             }
             out.println("</div>");
           }
          out.println("</body>");
          out.println("</html>");
-         out.flush();
     }
     void build_png(HttpServletResponse resp) throws IOException  {
           resp.setContentType("image/png");
+          resp.setHeader("Cache-Control", "max-age=120");
           ServletOutputStream sos = resp.getOutputStream();
           InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("../../tomcat.png");
           BufferedInputStream bis = new BufferedInputStream(is);
@@ -111,17 +117,23 @@ public class Servlet extends HttpServlet {
           
           PushBuilder pushBuilder = req.newPushBuilder();
           if (pushBuilder != null) {
+
+            /* push the images */
             long etag = System.currentTimeMillis();
             sendPush(pushBuilder, etag);
-            build_html(out, context, "Server push");
+
+            /* send the html page */
+            build_imagesLinks(resp, context);
+            build_html(out, context, true);
+
           } else {
-            build_html(out, context, "No server push");
+            build_html(out, context, false);
           }
           out.flush();
     }
     void sendPush(PushBuilder builder, long etag) {
-          for (int i = 0; i < 25; i++) {
-              for (int j = 0; j < 45; j++) {
+          for (int i = 0; i < LINE; i++) {
+              for (int j = 0; j < COL; j++) {
                   String s = imagePath(i, j);
                   builder.path(s);
                   builder.setHeader("ETag", "" + etag);
@@ -133,5 +145,13 @@ public class Servlet extends HttpServlet {
     }
     String imagePath(int i, int j) {
           return "images/" + i + j + ".png";
+    }
+    void build_imagesLinks(HttpServletResponse resp, String context) {
+          for (int i = 0; i < LINE; i++) {
+              for (int j = 0; j < COL; j++) {
+                  String s = imagePath(i, j);
+                  resp.addHeader("Link", "<" + context + "/" + s + ">; rel=preload; as=image");
+              }
+          }
     }
 }
