@@ -1,18 +1,20 @@
 package org.jfclere.h2demo;
 
-import javax.servlet.annotation.WebServlet;
+import jakarta.servlet.annotation.WebServlet;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.PushBuilder;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.PushBuilder;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
 
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+
+import java.util.Random;
 
 /**
  * Servlet implementation class
@@ -22,6 +24,7 @@ public class Servlet extends HttpServlet {
 
     static int LINE = 10;
     static int COL  = 10;
+    static Random rand = new Random();
 
     protected void service(HttpServletRequest req, HttpServletResponse resp)
            throws ServletException, IOException {
@@ -56,6 +59,9 @@ public class Servlet extends HttpServlet {
           out.println("<!DOCTYPE html>");
           out.println("<html>");
           out.println("<head>");
+          out.println("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
+          out.println("    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
+          out.println("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
           out.println("    <title>HTTP/2 DEMO</title>");
           out.println("</head>");
           out.println("<script>");
@@ -73,10 +79,11 @@ public class Servlet extends HttpServlet {
           out.println("<div id=\"main\" >");
           out.println("<div>Load time: <span id=\"loadTime\">0</span>s.</div>");
           out.println("</div>");
+          int n = rand.nextInt(5000);
           for (int i=0; i<LINE; i++) {
             out.println("<div id=\"row" + i + "\" >");
             for (int j=0; j<COL; j++) {
-              out.println("<img height=\"20\" width=\"20\" onload='imageLoadTime()' src=\"" + context + "/images/" + i + j + ".png\" />");
+              out.println("<img height=\"20\" width=\"20\" onload='imageLoadTime()' src=\"" + context + "/images/" + n + i + j + ".png\" />");
             }
             out.println("</div>");
           }
@@ -103,8 +110,9 @@ public class Servlet extends HttpServlet {
           out.println("<head>");
           out.println("    <title>HTTP/2 DEMO</title>");
           
-          out.println("<a href=\"page\">normal HTTP/2 page</a>");
-          out.println("<a href=\"push\">push servlet page</a>");
+          out.println("<a href=\"https://localhost:8002/page\">HTTP/2 page</a><br/>");
+          out.println("<a href=\"https://localhost:8443/page\">HTTP/1 page</a><br/>");
+          // out.println("<a href=\"push\">push servlet page</a>");
           out.println("</head>");
           out.println("</body>");
           out.println("<body>");
