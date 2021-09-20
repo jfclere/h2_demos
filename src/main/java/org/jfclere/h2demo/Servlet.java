@@ -33,26 +33,25 @@ public class Servlet extends HttpServlet {
         // System.out.println("RequestURL etag: " + req.getHeader("etag"));
         // System.out.println("RequestURL referer: " + req.getHeader("referer"));
         String url = req.getRequestURL().toString();
-        if (url.endsWith("/")) {
-          try { build_index(resp, req.getServerName(), req.getRequestURI()); } catch (IOException ex) { System.out.println("Ex: " + ex); }
-          return;
-        }
         if (url.endsWith("/page")) {
           resp.setContentType("text/html");
           PrintWriter out = resp.getWriter();
           try { build_html(out, req.getContextPath(), false); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
-        if (url.endsWith("/push")) {
+        else if (url.endsWith("/push")) {
           try { build_push(resp, req); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
-        if (url.endsWith(".png")) {
+        else if (url.endsWith(".png")) {
           long now = System.currentTimeMillis();
           try { build_png(resp); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
-        System.out.println("RequestURL requested: " + url);
+        else {
+          try { build_index(resp, req.getServerName(), req.getRequestURI()); } catch (IOException ex) { System.out.println("Ex: " + ex); }
+          return;
+        }
         
     }
     void build_html(PrintWriter out, String context, boolean push) throws IOException  {
