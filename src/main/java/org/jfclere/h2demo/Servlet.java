@@ -22,19 +22,19 @@ import java.util.Random;
 @WebServlet(description = "Demo for H2", urlPatterns = { "/*" })
 public class Servlet extends HttpServlet {
 
-    static int LINE = 10;
-    static int COL  = 10;
+    static int LINE = 40;
+    static int COL  = 40;
     static Random rand = new Random();
 
     protected void service(HttpServletRequest req, HttpServletResponse resp)
            throws ServletException, IOException {
-        System.out.println("ContextPath requested: " + req.getContextPath());
-        System.out.println("RequestURL requested: " + req.getRequestURL());
-        System.out.println("RequestURL etag: " + req.getHeader("etag"));
-        System.out.println("RequestURL referer: " + req.getHeader("referer"));
+        // System.out.println("ContextPath requested: " + req.getContextPath());
+        // System.out.println("RequestURL requested: " + req.getRequestURL());
+        // System.out.println("RequestURL etag: " + req.getHeader("etag"));
+        // System.out.println("RequestURL referer: " + req.getHeader("referer"));
         String url = req.getRequestURL().toString();
         if (url.endsWith("/")) {
-          try { build_index(resp); } catch (IOException ex) { System.out.println("Ex: " + ex); }
+          try { build_index(resp, req.getServerName(), req.getRequestURI()); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
         if (url.endsWith("/page")) {
@@ -62,7 +62,13 @@ public class Servlet extends HttpServlet {
           out.println("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
           out.println("    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
           out.println("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-          out.println("    <title>HTTP/2 DEMO</title>");
+          /* we need the preloads like <link rel="preload" href="/styles/other.css" as="style"> */
+          if (push) {
+            build_imagesPreload(out, context);
+            out.println("    <title>HTTP/2 SERVER PUSH DEMO</title>");
+          } else {
+            out.println("    <title>HTTP/2 DEMO</title>");
+          }
           out.println("</head>");
           out.println("<script>");
           out.println("        function imageLoadTime() {");
@@ -102,7 +108,7 @@ public class Servlet extends HttpServlet {
           } 
           bis.close();
     }
-    void build_index(HttpServletResponse resp) throws IOException  {
+    void build_index(HttpServletResponse resp, String hostname, String uri) throws IOException  {
           resp.setContentType("text/html");
           PrintWriter out = resp.getWriter();
           out.println("<!DOCTYPE html>");
@@ -110,8 +116,8 @@ public class Servlet extends HttpServlet {
           out.println("<head>");
           out.println("    <title>HTTP/2 DEMO</title>");
           
-          out.println("<a href=\"https://localhost:8002/page\">HTTP/2 page</a><br/>");
-          out.println("<a href=\"https://localhost:8443/page\">HTTP/1 page</a><br/>");
+          out.println("<a href=\"https://" + hostname + ":8002" + uri + "/page\">HTTP/2 page</a><br/>");
+          out.println("<a href=\"https://" + hostname + ":8443" + uri + "/page\">HTTP/1 page</a><br/>");
           // out.println("<a href=\"push\">push servlet page</a>");
           out.println("</head>");
           out.println("</body>");
@@ -135,6 +141,7 @@ public class Servlet extends HttpServlet {
             build_html(out, context, true);
 
           } else {
+            System.out.println("Problem pushBuilder == NULL");
             build_html(out, context, false);
           }
           out.flush();
@@ -149,7 +156,7 @@ public class Servlet extends HttpServlet {
                   builder.push();
               }
           }
-          System.out.println("sendPush Done!");
+          // System.out.println("sendPush Done!");
     }
     String imagePath(int i, int j) {
           return "images/" + i + j + ".png";
@@ -159,6 +166,15 @@ public class Servlet extends HttpServlet {
               for (int j = 0; j < COL; j++) {
                   String s = imagePath(i, j);
                   resp.addHeader("Link", "<" + context + "/" + s + ">; rel=preload; as=image");
+              }
+          }
+    }
+    void build_imagesPreload(PrintWriter out, String context) {
+          for (int i = 0; i < LINE; i++) {
+              for (int j = 0; j < COL; j++) {
+                  String s = imagePath(i, j);
+                  /* we need the preloads like <link rel="preload" href="/styles/other.css" as="style"> */
+                  out.println("    <link rel=\"preload\" href=\"" + context + "/" + s + "\" rel=preload; as=\"image\">");
               }
           }
     }
