@@ -36,7 +36,7 @@ public class Servlet extends HttpServlet {
         if (url.endsWith("/page")) {
           resp.setContentType("text/html");
           PrintWriter out = resp.getWriter();
-          try { build_html(out, req.getContextPath(), false); } catch (IOException ex) { System.out.println("Ex: " + ex); }
+          try { build_html(out, req.getProtocol(), req.getContextPath(), false); } catch (IOException ex) { System.out.println("Ex: " + ex); }
           return;
         }
         else if (url.endsWith("/push")) {
@@ -54,7 +54,7 @@ public class Servlet extends HttpServlet {
         }
         
     }
-    void build_html(PrintWriter out, String context, boolean push) throws IOException  {
+    void build_html(PrintWriter out, String scheme, String context, boolean push) throws IOException  {
           out.println("<!DOCTYPE html>");
           out.println("<html>");
           out.println("<head>");
@@ -80,7 +80,7 @@ public class Servlet extends HttpServlet {
           if (push)
             out.println("Server PUSHED");
           else
-            out.println("Normal");
+            out.println("Normal " + scheme);
           out.println("<div id=\"main\" >");
           out.println("<div>Load time: <span id=\"loadTime\">0</span>s.</div>");
           out.println("</div>");
@@ -137,11 +137,11 @@ public class Servlet extends HttpServlet {
 
             /* send the html page */
             build_imagesLinks(resp, context);
-            build_html(out, context, true);
+            build_html(out, req.getProtocol(), context, true);
 
           } else {
             System.out.println("Problem pushBuilder == NULL");
-            build_html(out, context, false);
+            build_html(out, req.getProtocol(), context, false);
           }
           out.flush();
     }
